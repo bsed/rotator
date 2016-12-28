@@ -23,7 +23,7 @@ import (
 type (
 	Logger struct {
 		prefix     string
-		level      Lvl
+		level      log.Lvl
 		output     io.Writer
 		template   *fasttemplate.Template
 		levels     []string
@@ -32,12 +32,10 @@ type (
 		mutex      sync.Mutex
 		rotator    Rotator
 	}
-
-	Lvl uint8
 )
 
 const (
-	DEBUG Lvl = iota + 1
+	DEBUG log.Lvl = iota + 1
 	INFO
 	WARN
 	ERROR
@@ -104,11 +102,11 @@ func (l *Logger) SetPrefix(p string) {
 	l.prefix = p
 }
 
-func (l *Logger) Level() Lvl {
+func (l *Logger) Level() log.Lvl {
 	return l.level
 }
 
-func (l *Logger) SetLevel(v Lvl) {
+func (l *Logger) SetLevel(v log.Lvl) {
 	l.level = v
 }
 
@@ -222,7 +220,7 @@ func (l *Logger) Panicj(j log.JSON) {
 	panic(j)
 }
 
-func (l *Logger) log(v Lvl, format string, args ...interface{}) {
+func (l *Logger) log(v log.Lvl, format string, args ...interface{}) {
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
 	buf := l.bufferPool.Get().(*bytes.Buffer)
