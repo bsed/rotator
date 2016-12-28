@@ -17,6 +17,7 @@ import (
 	"github.com/valyala/fasttemplate"
 
 	"github.com/labstack/gommon/color"
+	"github.com/labstack/gommon/log"
 )
 
 type (
@@ -33,8 +34,6 @@ type (
 	}
 
 	Lvl uint8
-
-	JSON map[string]interface{}
 )
 
 const (
@@ -141,7 +140,7 @@ func (l *Logger) Printf(format string, args ...interface{}) {
 	l.log(0, format, args...)
 }
 
-func (l *Logger) Printj(j JSON) {
+func (l *Logger) Printj(j log.JSON) {
 	l.log(0, "json", j)
 }
 
@@ -153,7 +152,7 @@ func (l *Logger) Debugf(format string, args ...interface{}) {
 	l.log(DEBUG, format, args...)
 }
 
-func (l *Logger) Debugj(j JSON) {
+func (l *Logger) Debugj(j log.JSON) {
 	l.log(DEBUG, "json", j)
 }
 
@@ -165,7 +164,7 @@ func (l *Logger) Infof(format string, args ...interface{}) {
 	l.log(INFO, format, args...)
 }
 
-func (l *Logger) Infoj(j JSON) {
+func (l *Logger) Infoj(j log.JSON) {
 	l.log(INFO, "json", j)
 }
 
@@ -177,7 +176,7 @@ func (l *Logger) Warnf(format string, args ...interface{}) {
 	l.log(WARN, format, args...)
 }
 
-func (l *Logger) Warnj(j JSON) {
+func (l *Logger) Warnj(j log.JSON) {
 	l.log(WARN, "json", j)
 }
 
@@ -189,7 +188,7 @@ func (l *Logger) Errorf(format string, args ...interface{}) {
 	l.log(ERROR, format, args...)
 }
 
-func (l *Logger) Errorj(j JSON) {
+func (l *Logger) Errorj(j log.JSON) {
 	l.log(ERROR, "json", j)
 }
 
@@ -203,7 +202,7 @@ func (l *Logger) Fatalf(format string, args ...interface{}) {
 	os.Exit(1)
 }
 
-func (l *Logger) Fatalj(j JSON) {
+func (l *Logger) Fatalj(j log.JSON) {
 	l.Printj(j)
 	os.Exit(1)
 }
@@ -218,7 +217,7 @@ func (l *Logger) Panicf(format string, args ...interface{}) {
 	panic(fmt.Sprintf(format, args))
 }
 
-func (l *Logger) Panicj(j JSON) {
+func (l *Logger) Panicj(j log.JSON) {
 	l.Printj(j)
 	panic(j)
 }
