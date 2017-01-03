@@ -48,6 +48,10 @@ var (
 )
 
 func NewLogger(path, prefix string, limitSize int) (l *Logger) {
+	if limitSize <= 0 {
+		return newDebugLogger(prefix)
+	}
+
 	rotator := NewFileSizeRotator(path, prefix, "log", limitSize)
 	l = &Logger{
 		level:    INFO,
@@ -67,6 +71,23 @@ func NewLogger(path, prefix string, limitSize int) (l *Logger) {
 		panic(err)
 	}
 	l.SetOutput(writer)
+	return
+}
+
+func newDebugLogger(prefix string) (l *Logger) {
+	l = &Logger{
+		level:    INFO,
+		prefix:   prefix,
+		template: l.newTemplate(defaultHeader),
+		color:    color.New(),
+		bufferPool: sync.Pool{
+			New: func() interface{} {
+				return bytes.NewBuffer(make([]byte, 256))
+			},
+		},
+	}
+	l.initLevels()
+	l.SetOutput(os.Stdout)
 	return
 }
 
@@ -281,12 +302,15 @@ func (l *Logger) log(v log.Lvl, format string, args ...interface{}) {
 			}
 			buf.WriteByte('\n')
 			n, err := l.output.Write(buf.Bytes())
-			if err == nil && l.rotator.ReachLimit(n) {
-				w, err := l.rotator.GetNextWriter()
-				if err != nil {
-					l.Error(err)
-				} else {
-					l.SetOutput(w)
+			// if rotator is set, do rotate
+			if l.rotator != nil {
+				if err == nil && l.rotator.ReachLimit(n) {
+					w, err := l.rotator.GetNextWriter()
+					if err != nil {
+						l.Error(err)
+					} else {
+						l.SetOutput(w)
+					}
 				}
 			}
 		}
