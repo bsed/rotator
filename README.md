@@ -7,7 +7,7 @@ package main
 
 import ()
 	"github.com/labstack/echo"
-	elog "github.com/silentred/echo-log"
+	"github.com/silentred/rotator"
 )
 
 // Echo is the web engine
@@ -24,13 +24,13 @@ func main() {
 }
 
 func initLogger() {
-	path := "log"
+	path := "storage/log"
 	appName := "app"
 	limitSize := 100 << 20 // 100MB
 
-	Echo.Logger = elog.NewLogger(path, appName, limitSize)
+	r := rotator.NewFileSizeRotator(path, appName, "log", limitSize)
+	Echo.Logger.SetOutput(r) 
 	Echo.Logger.SetLevel(elog.WARN)
-
 }
 
 ```
