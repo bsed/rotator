@@ -1,4 +1,4 @@
-package elog
+package rotator
 
 import (
 	"fmt"
@@ -38,17 +38,23 @@ func NewFileSizeRotator(path, prefix, ext string, limitSize int) *FileSizeRotato
 	if limitSize == 0 {
 		limitSize = defaultSize
 	}
-	return &FileSizeRotator{
+	r := &FileSizeRotator{
 		path:       path,
 		prefixName: prefix,
 		extName:    ext,
 		format:     defaultFormat,
 		limitSize:  uint64(limitSize),
 	}
+	_, err := r.getNextWriter()
+	if err != nil {
+		panic(err)
+	}
+
+	return r
 }
 
 // ReachLimit checks if current size is bigger than limit size
-func (r *FileSizeRotator) ReachLimit(n int) bool {
+func (r *FileSizeRotator) reachLimit(n int) bool {
 	atomic.AddUint64(&r.currSize, uint64(n))
 	if r.currSize > r.limitSize {
 		return true
@@ -63,7 +69,7 @@ func (r *FileSizeRotator) getNextName() string {
 	return filepath.Join(r.path, file)
 }
 
-func (r *FileSizeRotator) GetNextWriter() (io.Writer, error) {
+func (r *FileSizeRotator) getNextWriter() (io.Writer, error) {
 	file := r.getNextName()
 
 	perm, err := strconv.ParseInt("0755", 8, 64)
@@ -90,6 +96,18 @@ func (r *FileSizeRotator) GetNextWriter() (io.Writer, error) {
 	return fd, nil
 }
 
-func (r *FileSizeRotator) GetCurrentCloser() io.WriteCloser {
-	return r.fd
+func (r *FileSizeRotator) Write(p []byte) (n int, err error) {
+	n, err = r.fd.Write(p)
+	if err != nil {
+		return n, err
+	}
+
+	if err == nil && r.reachLimit(n) {
+		_, err := r.getNextWriter()
+		if err != nil {
+			return n, err
+		}
+	}
+
+	return n, nil
 }
