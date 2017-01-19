@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"sync/atomic"
+	"syscall"
 	"time"
 )
 
@@ -26,6 +27,8 @@ type FileSizeRotator struct {
 	limitSize uint64
 
 	fd io.WriteCloser
+	// clean elder log file
+	clean bool
 }
 
 func NewFileSizeRotator(path, prefix, ext string, limitSize int) *FileSizeRotator {
@@ -44,6 +47,7 @@ func NewFileSizeRotator(path, prefix, ext string, limitSize int) *FileSizeRotato
 		extName:    ext,
 		format:     defaultFormat,
 		limitSize:  uint64(limitSize),
+		clean:      true,
 	}
 	_, err := r.getNextWriter()
 	if err != nil {
@@ -69,7 +73,41 @@ func (r *FileSizeRotator) getNextName() string {
 	return filepath.Join(r.path, file)
 }
 
+func (r *FileSizeRotator) removeOlderFile() error {
+	pattern := fmt.Sprintf("%s_*.%s", r.prefixName, r.extName)
+	files, err := filepath.Glob(pattern)
+	if err != nil {
+		return err
+	}
+	for _, file := range files {
+		f, err := os.Open(file)
+		if err != nil {
+			return err
+		}
+
+		info, err := f.Stat()
+		if err != nil {
+			return err
+		}
+
+		stat := info.Sys().(*syscall.Stat_t)
+		t := timespecToTime(stat.Ctimespec)
+		if time.Now().Sub(t) > 24*time.Hour {
+			err = os.Remove(file)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 func (r *FileSizeRotator) getNextWriter() (io.Writer, error) {
+	err := r.removeOlderFile()
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	file := r.getNextName()
 
 	perm, err := strconv.ParseInt("0755", 8, 64)

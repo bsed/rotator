@@ -5,7 +5,7 @@ import "github.com/labstack/gommon/log"
 
 func Test_FileSizeRotator(t *testing.T) {
 	l := log.New("-")
-	fileRotator := NewFileSizeRotator("", "app", "log", 2000)
+	fileRotator := NewFileSizeRotator("", "app", "log", 1000)
 	l.SetOutput(fileRotator)
 	l.SetLevel(log.DEBUG)
 
