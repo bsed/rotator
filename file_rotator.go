@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"sync/atomic"
-	"syscall"
 	"time"
 )
 
@@ -90,8 +89,7 @@ func (r *FileSizeRotator) removeOlderFile() error {
 			return err
 		}
 
-		stat := info.Sys().(*syscall.Stat_t)
-		t := timespecToTime(stat.Ctimespec)
+		t := atime(info)
 		if time.Now().Sub(t) > 24*time.Hour {
 			err = os.Remove(file)
 			if err != nil {

@@ -13,3 +13,7 @@ func timespecToTime(ts syscall.Timespec) time.Time {
 func atime(fi os.FileInfo) time.Time {
 	return timespecToTime(fi.Sys().(*syscall.Stat_t).Atim)
 }
+
+func ctime(fi os.FileInfo) time.Time {
+	return timespecToTime(fi.Sys().(*syscall.Stat_t).Ctim)
+}
