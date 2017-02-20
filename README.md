@@ -1,4 +1,4 @@
-# Echo logger with rotatar
+# Echo logger with rotator
 
 ## Usage
 
