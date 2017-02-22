@@ -18,16 +18,17 @@ const (
 type FileSizeRotator struct {
 	path string
 	// file name prefix
-	prefixName string
-	extName    string
-	format     string
+	prefixName   string
+	extName      string
+	format       string
+	currFileName string
 	// size
 	currSize  uint64
 	limitSize uint64
 
 	fd io.WriteCloser
 	// clean elder log file
-	clean bool
+	Clean bool
 }
 
 func NewFileSizeRotator(path, prefix, ext string, limitSize int) *FileSizeRotator {
@@ -46,7 +47,7 @@ func NewFileSizeRotator(path, prefix, ext string, limitSize int) *FileSizeRotato
 		extName:    ext,
 		format:     defaultFormat,
 		limitSize:  uint64(limitSize),
-		clean:      true,
+		Clean:      false,
 	}
 	_, err := r.getNextWriter()
 	if err != nil {
@@ -79,6 +80,10 @@ func (r *FileSizeRotator) removeOlderFile() error {
 		return err
 	}
 	for _, file := range files {
+		if file == r.currFileName {
+			continue
+		}
+
 		f, err := os.Open(file)
 		if err != nil {
 			return err
@@ -101,9 +106,11 @@ func (r *FileSizeRotator) removeOlderFile() error {
 }
 
 func (r *FileSizeRotator) getNextWriter() (io.Writer, error) {
-	err := r.removeOlderFile()
-	if err != nil {
-		fmt.Println(err)
+	if r.Clean {
+		err := r.removeOlderFile()
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 
 	file := r.getNextName()
@@ -125,6 +132,8 @@ func (r *FileSizeRotator) getNextWriter() (io.Writer, error) {
 
 		// reset currSize
 		r.currSize = 0
+		// set currFileName
+		r.currFileName = file
 	} else {
 		return nil, err
 	}
